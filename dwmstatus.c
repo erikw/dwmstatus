@@ -48,7 +48,7 @@ char * smprintf(char *fmt, ...)
 static float get_freq(char *file)
 {
 	FILE *fd;
-	char *freq; 
+	char *freq;
 	float ret;
 
 	freq = malloc(10);
@@ -79,7 +79,8 @@ static void get_datetime()
 		fprintf(stderr, "Error getting localtime.\n");
 		exit(EXIT_FAILURE);
 	}
-	if (!strftime(datetime_buf, (DATE_MAX_LEN - 1), "%a %F %H:%M:%S", resulttm)) {
+	/*if (!strftime(datetime_buf, (DATE_MAX_LEN - 1), "%a %F %H:%M:%S", resulttm)) {*/	// 24 hour.
+	if (!strftime(datetime_buf, (DATE_MAX_LEN - 1), "%a %F %I:%M:%S %p", resulttm)) {	// 12 hour.
 		fprintf(stderr, "strftime is 0.\n");
 		exit(EXIT_FAILURE);
 	}
