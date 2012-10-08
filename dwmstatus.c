@@ -183,7 +183,7 @@ int main(void)
 		cpu3 = get_freq("/sys/devices/system/cpu/cpu3/cpufreq/scaling_cur_freq");
 		get_datetime();
 		bat0 = get_battery();
-		snprintf(status, 200, "%s %s %s | %0.2f, %0.2f, %0.2f, %0.2f | %d%% | %s", mpd_np, maildir_counts, avgs, cpu0, cpu1, cpu2, cpu3, bat0, datetime_buf);
+		snprintf(status, 200, "%s %s %s | %0.2f, %0.2f, %0.2f, %0.2f | %3d%% | %s", mpd_np, maildir_counts, avgs, cpu0, cpu1, cpu2, cpu3, bat0, datetime_buf);
 
 		set_status(status);
 		sleep(1);
