@@ -6,13 +6,18 @@
 #define _BSD_SOURCE	/* To get loadavg function form stdlib.h. */
 #include <stdlib.h>
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <unistd.h>
 #include <time.h>
+#include <string.h>
 
 #include <X11/Xlib.h>
+#include <dirent.h>
+#include <sys/types.h>
+#include <wordexp.h>
 
 static Display *dpy;
 
@@ -22,7 +27,7 @@ static void set_status(char *str)
 	XSync(dpy, False);
 }
 
-char * smprintf(char *fmt, ...)
+char *smprintf(char *fmt, ...)
 {
 	va_list fmtargs;
 	char *ret;
@@ -142,10 +147,36 @@ static char *loadavg(void)
 	return smprintf("%.2f %.2f %.2f", avgs[0], avgs[1], avgs[2]);
 }
 
-static char*maildir_no_mail = "0m |";
-static char *get_maildir_counts()
+/*static char *maildir_no_mail = "0m |";*/
+static char *maildir_no_mail = "";
+static char *maildir_inbox_path  = "~/.mail/inbox/new/";
+#define MAILCOUNT_MAX_LEN (32)
+static char *mailcount_buf;
+static void set_maildir_count()
 {
-	return maildir_no_mail;
+	wordexp_t wordx;
+	wordexp(maildir_inbox_path, &wordx, 0);
+	DIR *dirp = opendir(wordx.we_wordv[0]);
+	wordfree(&wordx);
+	if (dirp == NULL) {
+		strerror(errno);
+		snprintf(mailcount_buf, MAILCOUNT_MAX_LEN, "%s", strerror(errno));
+	}
+
+	struct dirent *dir;
+	size_t count = 0;
+	while ((dir = readdir(dirp)) != NULL) {
+		if (dir->d_type == DT_REG) {
+			++count;
+		}
+	}
+	closedir(dirp);
+
+	if (count > 0 ) {
+		snprintf(mailcount_buf, MAILCOUNT_MAX_LEN, "INBOX: %zu |", count);
+	} else {
+		snprintf(mailcount_buf, MAILCOUNT_MAX_LEN, "%s", maildir_no_mail);
+	}
 }
 
 int main(void)
@@ -155,7 +186,6 @@ int main(void)
 	float cpu0, cpu1, cpu2, cpu3;
 	int bat0;
 	const char *mpd_np;
-	char *maildir_counts;
 
 
 	if (!(dpy = XOpenDisplay(NULL))) {
@@ -172,10 +202,15 @@ int main(void)
 		exit(EXIT_FAILURE);
 	}
 
-	//for (size_t i = 0; i < 10; ++i) { // For leak-checking.
+	if ((mailcount_buf = malloc(MAILCOUNT_MAX_LEN)) == NULL) {
+		fprintf(stderr, "Cannot allocate memory for mailcount_buf.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	/*for (size_t i = 0; i < 10; ++i) { // For leak-checking.*/
 	while (true) {
 		mpd_np = get_mpd_np();
-		maildir_counts = get_maildir_counts();
+		set_maildir_count();
 		avgs = loadavg();
 		cpu0 = get_freq("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq");
 		cpu1 = get_freq("/sys/devices/system/cpu/cpu1/cpufreq/scaling_cur_freq");
@@ -183,12 +218,14 @@ int main(void)
 		cpu3 = get_freq("/sys/devices/system/cpu/cpu3/cpufreq/scaling_cur_freq");
 		get_datetime();
 		bat0 = get_battery();
-		snprintf(status, 200, "%s %s %s | %0.2f, %0.2f, %0.2f, %0.2f | %3d%% | %s", mpd_np, maildir_counts, avgs, cpu0, cpu1, cpu2, cpu3, bat0, datetime_buf);
+		snprintf(status, 200, "%s %s %s | %0.2f, %0.2f, %0.2f, %0.2f | %3d%% | %s", mpd_np, mailcount_buf, avgs, cpu0, cpu1, cpu2, cpu3, bat0, datetime_buf);
 
+		free(avgs);
 		set_status(status);
 		sleep(1);
 	}
 
+	free(mailcount_buf);
 	free(datetime_buf);
 	free(status);
 	XCloseDisplay(dpy);
