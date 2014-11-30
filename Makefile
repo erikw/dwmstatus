@@ -23,7 +23,7 @@ LDFLAGS = -s $(LIBS)
 SRC = $(NAME).c
 OBJ = $(SRC:.c=.o)
 
-.PHONY: all clean
+.PHONY: all clean uninstall
 
 all: $(NAME) 
 
@@ -38,4 +38,7 @@ clean:
 
 install: $(NAME)
 	install -m $(INSTMODE) $< $(INSTPATH)
+
+uninstall:
+	$(RM) $(INSTPATH)/$(NAME)
 
