@@ -5,6 +5,10 @@ PREFIX = /usr/local
 MANPREFIX = $(PREFIX)/share/man
 X11INC = /usr/X11R6/include
 X11LIB = /usr/X11R6/lib
+INSTPATH= $(PREFIX)/bin
+
+# Other
+INSTMODE = 0755
 
 # Includes and libs
 INCS = -I. -I/usr/include -I$(X11INC)
@@ -19,15 +23,19 @@ LDFLAGS = -s $(LIBS)
 SRC = $(NAME).c
 OBJ = $(SRC:.c=.o)
 
+.PHONY: all clean
+
 all: $(NAME) 
 
-dwmstatus.o: dwmstatus.c
+%.o: %.c
 	@$(CC) -c $(CFLAGS) $<
 
 $(NAME): $(OBJ)
 	@$(CC) -o $@ $(OBJ) $(LDFLAGS)
 
 clean:
-	$(RM) $(OBJ)
+	$(RM) $(OBJ) $(NAME)
 
-.PHONY: all clean
+install: $(NAME)
+	install -m $(INSTMODE) $< $(INSTPATH)
+
