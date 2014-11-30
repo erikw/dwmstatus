@@ -84,8 +84,8 @@ static void get_datetime()
 		fprintf(stderr, "Error getting localtime.\n");
 		exit(EXIT_FAILURE);
 	}
-	/*if (!strftime(datetime_buf, (DATE_MAX_LEN - 1), "%a %F %H:%M:%S", resulttm)) {*/	// 24 hour.
-	if (!strftime(datetime_buf, (DATE_MAX_LEN - 1), "%a %F %I:%M:%S %p", resulttm)) {	// 12 hour.
+	if (!strftime(datetime_buf, (DATE_MAX_LEN - 1), "%a %F %H:%M:%S", resulttm)) {	// 24 hour.
+	/*if (!strftime(datetime_buf, (DATE_MAX_LEN - 1), "%a %F %I:%M:%S %p", resulttm)) {	// 12 hour.*/
 		fprintf(stderr, "strftime is 0.\n");
 		exit(EXIT_FAILURE);
 	}
@@ -152,7 +152,7 @@ static char *maildir_no_mail = "";
 static char *maildir_inbox_path  = "~/.mail/inbox/new/";
 #define MAILCOUNT_MAX_LEN (32)
 static char *mailcount_buf;
-static void set_maildir_count()
+static void get_maildir_count()
 {
 	wordexp_t wordx;
 	wordexp(maildir_inbox_path, &wordx, 0);
@@ -183,7 +183,7 @@ int main(void)
 {
 	char *status;
 	char *avgs;
-	float cpu0, cpu1, cpu2, cpu3;
+	/*float cpu0, cpu1, cpu2, cpu3;*/
 	int bat0;
 	const char *mpd_np;
 
@@ -210,15 +210,16 @@ int main(void)
 	/*for (size_t i = 0; i < 10; ++i) { // For leak-checking.*/
 	while (true) {
 		mpd_np = get_mpd_np();
-		set_maildir_count();
+		get_maildir_count();
 		avgs = loadavg();
-		cpu0 = get_freq("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq");
-		cpu1 = get_freq("/sys/devices/system/cpu/cpu1/cpufreq/scaling_cur_freq");
-		cpu2 = get_freq("/sys/devices/system/cpu/cpu2/cpufreq/scaling_cur_freq");
-		cpu3 = get_freq("/sys/devices/system/cpu/cpu3/cpufreq/scaling_cur_freq");
+		/*cpu0 = get_freq("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq");*/
+		/*cpu1 = get_freq("/sys/devices/system/cpu/cpu1/cpufreq/scaling_cur_freq");*/
+		/*cpu2 = get_freq("/sys/devices/system/cpu/cpu2/cpufreq/scaling_cur_freq");*/
+		/*cpu3 = get_freq("/sys/devices/system/cpu/cpu3/cpufreq/scaling_cur_freq");*/
 		get_datetime();
 		bat0 = get_battery();
-		snprintf(status, 200, "%s %s %s | %0.2f, %0.2f, %0.2f, %0.2f | %3d%% | %s", mpd_np, mailcount_buf, avgs, cpu0, cpu1, cpu2, cpu3, bat0, datetime_buf);
+		/*snprintf(status, 200, "%s %s %s | %0.2f, %0.2f, %0.2f, %0.2f | %3d%% | %s", mpd_np, mailcount_buf, avgs, cpu0, cpu1, cpu2, cpu3, bat0, datetime_buf);*/
+		snprintf(status, 200, "%s %s %s | %3d%% | %s", mpd_np, mailcount_buf, avgs, bat0, datetime_buf);
 
 		free(avgs);
 		set_status(status);
