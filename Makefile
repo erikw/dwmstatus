@@ -16,7 +16,11 @@ LIBS = -L/usr/lib -lc -L$(X11LIB) -lX11
 
 # Compiler and linker
 CC = clang
-CFLAGS = -std=c99 -pedantic -Wall -O3 $(INCS) $(CPPFLAGS)
+
+CFLAGS = -std=c99 -pedantic -Wall  $(INCS) $(CPPFLAGS)
+CFLAGS += -O3
+#CFLAGS += -g -O0
+
 LDFLAGS = -s $(LIBS)
 
 # Files

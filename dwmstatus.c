@@ -3,7 +3,7 @@
  * Compile with:
  * gcc -Wall -pedantic -std=c99 -lX11 status.c
  */
-#define _BSD_SOURCE	/* To get loadavg function form stdlib.h. */
+#define _DEFAULT_SOURCE	/* To get loadavg function form stdlib.h. */
 #include <stdlib.h>
 
 #include <errno.h>
@@ -50,7 +50,7 @@ char *smprintf(char *fmt, ...)
 	return ret;
 }
 
-static float get_freq(char *file)
+ __attribute__ ((unused)) static float get_freq(char *file)
 {
 	FILE *fd;
 	char *freq;
@@ -179,6 +179,25 @@ static void get_maildir_count()
 	}
 }
 
+#define XKB_MAX_LEN (8)
+#define XKB_LAYOUT_CMD "/usr/bin/xkblayout-state print %s"
+static char *xkb_buf;
+static void get_xkb_layout()
+{
+	FILE *fp;
+	char layout[XKB_MAX_LEN];
+
+	fp = popen(XKB_LAYOUT_CMD, "r");
+	if (fp == NULL) {
+		printf("Failed to run xkblayout command\n");
+		exit(EXIT_FAILURE);
+	}
+	fgets(layout, sizeof(layout), fp);
+	pclose(fp);
+
+	snprintf(xkb_buf, XKB_MAX_LEN, "%s", layout);
+}
+
 int main(void)
 {
 	char *status;
@@ -207,11 +226,17 @@ int main(void)
 		exit(EXIT_FAILURE);
 	}
 
+	if ((xkb_buf = malloc(XKB_MAX_LEN)) == NULL) {
+		fprintf(stderr, "Cannot allocate memory for xkb_buf.\n");
+		exit(EXIT_FAILURE);
+	}
+
 	/*for (size_t i = 0; i < 10; ++i) { // For leak-checking.*/
 	while (true) {
 		mpd_np = get_mpd_np();
 		get_maildir_count();
 		avgs = loadavg();
+		get_xkb_layout();
 		/*cpu0 = get_freq("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq");*/
 		/*cpu1 = get_freq("/sys/devices/system/cpu/cpu1/cpufreq/scaling_cur_freq");*/
 		/*cpu2 = get_freq("/sys/devices/system/cpu/cpu2/cpufreq/scaling_cur_freq");*/
@@ -219,13 +244,14 @@ int main(void)
 		get_datetime();
 		bat0 = get_battery();
 		/*snprintf(status, 200, "%s %s %s | %0.2f, %0.2f, %0.2f, %0.2f | %3d%% | %s", mpd_np, mailcount_buf, avgs, cpu0, cpu1, cpu2, cpu3, bat0, datetime_buf);*/
-		snprintf(status, 200, "%s %s %s | %3d%% | %s", mpd_np, mailcount_buf, avgs, bat0, datetime_buf);
+		snprintf(status, 200, "%s %s %s | xkb: %s | %3d%% | %s", mpd_np, mailcount_buf, avgs, xkb_buf, bat0, datetime_buf);
 
 		free(avgs);
 		set_status(status);
 		sleep(1);
 	}
 
+	free(xkb_buf);
 	free(mailcount_buf);
 	free(datetime_buf);
 	free(status);
