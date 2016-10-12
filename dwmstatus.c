@@ -1,3 +1,8 @@
+/**
+ * Copied & heavily modified from http://dwm.suckless.org/dwmstatus/ at some
+ * point, long long ago.
+ */
+
 /* made by profil 2011-12-29.
  *
  * Compile with:
